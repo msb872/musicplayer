@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>پخش موزیک با کاور آلبوم</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/music-metadata-browser@2.5.2/lib/index.umd.min.js"></script>
+
+  <style>
+    body { font-family: Tahoma; direction: rtl; background-color: #f4f4f4; padding: 20px; }
+    table { width: 100%; background: white; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; vertical-align: middle; max-width: 150px; }
+    .btn { background-color: #4caf50; color: white; padding: 6px 10px; border: none; margin: 2px; cursor: pointer; font-size: 12px; }
+    .btn:disabled { background-color: #aaa; }
+    .equalizer { width: 50px; height: 30px; display: flex; align-items: flex-end; gap: 3px; justify-content: center; }
+    .bar { width: 4px; background: #4caf50; border-radius: 2px; animation: bounce 1s infinite ease-in-out; }
+    .bar:nth-child(1) { animation-delay: 0s; }
+    .bar:nth-child(2) { animation-delay: 0.1s; }
+    .bar:nth-child(3) { animation-delay: 0.2s; }
+    .bar:nth-child(4) { animation-delay: 0.3s; }
+    .bar:nth-child(5) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 100% { height: 20%; } 50% { height: 100%; } }
+    .btn-delete { color: red; cursor: pointer; }
+    img.cover-img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
+    audio { max-width: 160px; }
+    progress { width: 100%; height: 20px; margin: 10px 0; cursor: pointer; direction: ltr !important; }
+    .controls-top { margin: 15px 0; }
+  </style>
+</head>
+<body>
+
+<h2>مدیریت و پخش فایل‌های صوتی</h2>
+
+<input type="file" id="audioReplaceInput" multiple accept="audio/*" style="display:none;" />
+<button class="btn" id="replaceBtn">📂 انتخاب فایل (جایگزینی)</button>
+
+<input type="file" id="audioAppendInput" multiple accept="audio/*" style="display:none;" />
+<button class="btn" id="appendBtn">➕ افزودن فایل</button>
+
+<button class="btn" id="toggleRepeatBtn">🔁 تکرار: خاموش</button>
+
+<div class="controls-top">
+  <button class="btn" id="prevBtn">◀️ قبلی</button>
+  <button class="btn" id="nextBtn">▶️ بعدی</button>
+</div>
+
+<progress id="globalProgress" value="0" max="1"></progress>
+
+<table id="audioTable">
+  <thead>
+    <tr>
+      <th>نام فایل</th>
+      <th>فرمت</th>
+      <th>حجم (MB)</th>
+      <th>مدت</th>
+      <th>باقی‌مانده</th>
+      <th>کاور</th>
+      <th>پخش</th>
+      <th>کنترل</th>
+      <th>اکوالایزر</th>
+      <th>حذف</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+let repeatEnabled = false;
+let currentAudio = null;
+let currentEq = null;
+const progressBar = document.getElementById('globalProgress');
+
+const table = $('#audioTable').DataTable({
+  language: {
+    search: "جست‌وجو:",
+    lengthMenu: "نمایش _MENU_ فایل",
+    info: "نمایش _START_ تا _END_ از _TOTAL_ فایل",
+    paginate: { first: "اول", last: "آخر", next: "بعدی", previous: "قبلی" }
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById('toggleRepeatBtn').onclick = () => {
+    repeatEnabled = !repeatEnabled;
+    if (currentAudio) currentAudio.loop = repeatEnabled;
+    document.getElementById('toggleRepeatBtn').textContent = repeatEnabled ? "🔁 تکرار: روشن" : "🔁 تکرار: خاموش";
+  };
+
+  document.getElementById('replaceBtn').onclick = () => document.getElementById('audioReplaceInput').click();
+  document.getElementById('appendBtn').onclick = () => document.getElementById('audioAppendInput').click();
+
+  document.getElementById('audioReplaceInput').addEventListener('change', function () {
+    table.clear().draw();
+    currentAudio = null;
+    progressBar.value = 0;
+    Array.from(this.files).forEach(file => addFileToTable(file));
+    this.value = '';
+  });
+
+  document.getElementById('audioAppendInput').addEventListener('change', function () {
+    Array.from(this.files).forEach(file => addFileToTable(file));
+    this.value = '';
+  });
+
+  document.getElementById('prevBtn').onclick = () => {
+    if (!currentAudio) return;
+    const rows = Array.from(table.rows().nodes());
+    const index = rows.findIndex(row => row.querySelector('audio') === currentAudio);
+    if (index > 0) {
+      const prevAudio = rows[index - 1].querySelector('audio');
+      if (prevAudio) {
+        currentAudio.pause();
+        prevAudio.currentTime = 0;
+        prevAudio.play();
+      }
+    }
+  };
+
+  document.getElementById('nextBtn').onclick = () => {
+    if (!currentAudio) return;
+    const rows = Array.from(table.rows().nodes());
+    const index = rows.findIndex(row => row.querySelector('audio') === currentAudio);
+    if (index >= 0 && index < rows.length - 1) {
+      const nextAudio = rows[index + 1].querySelector('audio');
+      if (nextAudio) {
+        currentAudio.pause();
+        nextAudio.currentTime = 0;
+        nextAudio.play();
+      }
+    }
+  };
+});
+
+progressBar.addEventListener('click', function (e) {
+  if (!currentAudio || !currentAudio.duration) return;
+  const rect = this.getBoundingClientRect();
+  const percent = (e.clientX - rect.left) / rect.width;
+  currentAudio.currentTime = percent * currentAudio.duration;
+});
+
+function createEqualizer() {
+  const eq = document.createElement('div');
+  eq.className = 'equalizer';
+  for (let i = 0; i < 5; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    eq.appendChild(bar);
+  }
+  eq.style.visibility = 'hidden';
+  return eq;
+}
+
+async function extractCover(file) {
+  try {
+    const metadata = await musicMetadata.parseBlob(file);
+    const pic = metadata.common.picture?.[0];
+    if (pic) {
+      const blob = new Blob([pic.data], { type: pic.format });
+      return URL.createObjectURL(blob);
+    }
+  } catch (e) {
+    console.warn("خطا در خواندن کاور:", e);
+  }
+  return null;
+}
+
+function addFileToTable(file) {
+  const url = URL.createObjectURL(file);
+  const audioPlayer = document.createElement('audio');
+  audioPlayer.src = url;
+  audioPlayer.controls = true;
+
+  const remainingTime = document.createElement('span');
+  const equalizer = createEqualizer();
+  const deleteBtn = document.createElement('span');
+  deleteBtn.textContent = '🗑️';
+  deleteBtn.className = 'btn-delete';
+
+  const btnBackward = document.createElement('button');
+  btnBackward.className = 'btn';
+  btnBackward.textContent = '⏪ 10s';
+  btnBackward.onclick = () => audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
+
+  const btnForward = document.createElement('button');
+  btnForward.className = 'btn';
+  btnForward.textContent = '⏩ 10s';
+  btnForward.onclick = () => audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
+
+  const controlContainer = document.createElement('div');
+  controlContainer.append(btnBackward, btnForward);
+
+  audioPlayer.addEventListener('play', () => {
+    if (currentAudio && currentAudio !== audioPlayer) currentAudio.pause();
+    currentAudio = audioPlayer;
+    currentEq = equalizer;
+    audioPlayer.loop = repeatEnabled;
+    equalizer.style.visibility = "visible";
+  });
+
+  audioPlayer.addEventListener('pause', () => equalizer.style.visibility = "hidden");
+  audioPlayer.addEventListener('timeupdate', () => {
+    const remain = audioPlayer.duration - audioPlayer.currentTime;
+    remainingTime.textContent = remain.toFixed(1);
+    progressBar.value = audioPlayer.currentTime / audioPlayer.duration;
+  });
+
+  audioPlayer.addEventListener('ended', () => {
+    progressBar.value = 0;
+    equalizer.style.visibility = "hidden";
+  });
+
+  audioPlayer.addEventListener('loadedmetadata', () => {
+    extractCover(file).then(coverUrl => {
+      const row = table.row.add([
+        file.name,
+        '.' + file.name.split('.').pop(),
+        (file.size / 1024 / 1024).toFixed(2),
+        audioPlayer.duration.toFixed(1),
+        '',
+        `<img src="${coverUrl || 'https://via.placeholder.com/60?text=🎵'}" class="cover-img" />`,
+        '',
+        '',
+        '',
+        ''
+      ]).draw(false).node();
+
+      row.cells[4].appendChild(remainingTime);
+      row.cells[6].appendChild(audioPlayer);
+      row.cells[7].appendChild(controlContainer);
+      row.cells[8].appendChild(equalizer);
+      row.cells[9].appendChild(deleteBtn);
+
+      deleteBtn.onclick = () => {
+        table.row(deleteBtn.closest('tr')).remove().draw(false);
+        URL.revokeObjectURL(url);
+      };
+    });
+  });
+}
+</script>
+
+</body>
+</html>
