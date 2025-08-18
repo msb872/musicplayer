@@ -1,64 +1,69 @@
 
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>پخش موزیک با کاور آلبوم</title>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/music-metadata-browser@2.5.2/lib/index.umd.min.js"></script>
+<meta charset="UTF-8">
+<title>پلیر موزیک پیشرفته</title>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
-  <style>
-    body { font-family: Tahoma; direction: rtl; background-color: #f4f4f4; padding: 20px; }
-    table { width: 100%; background: white; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; vertical-align: middle; max-width: 150px; }
-    .btn { background-color: #4caf50; color: white; padding: 6px 10px; border: none; margin: 2px; cursor: pointer; font-size: 12px; }
-    .btn:disabled { background-color: #aaa; }
-    .equalizer { width: 50px; height: 30px; display: flex; align-items: flex-end; gap: 3px; justify-content: center; }
-    .bar { width: 4px; background: #4caf50; border-radius: 2px; animation: bounce 1s infinite ease-in-out; }
-    .bar:nth-child(1) { animation-delay: 0s; }
-    .bar:nth-child(2) { animation-delay: 0.1s; }
-    .bar:nth-child(3) { animation-delay: 0.2s; }
-    .bar:nth-child(4) { animation-delay: 0.3s; }
-    .bar:nth-child(5) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%, 100% { height: 20%; } 50% { height: 100%; } }
-    .btn-delete { color: red; cursor: pointer; }
-    img.cover-img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
-    audio { max-width: 160px; }
-    progress { width: 100%; height: 20px; margin: 10px 0; cursor: pointer; direction: ltr !important; }
-    .controls-top { margin: 15px 0; }
-  </style>
+<style>
+body { font-family: Tahoma,sans-serif; background:#f4f4f4; padding:20px; }
+h2 { margin-bottom:12px; }
+table { width:100%; background:#fff; border-collapse:collapse; margin-top:16px; }
+th, td { border:1px solid #ddd; padding:10px; text-align:center; vertical-align:middle; transition:0.2s; }
+th.format, td.format { width:60px; }
+th.size, td.size { width:70px; }
+th.play, td.play { width:250px; }
+tr:hover { background:#e8f5e9; }
+.btn { background:#4caf50; color:#fff; padding:6px 10px; border:none; margin:2px; cursor:pointer; font-size:12px; border-radius:8px; transition:0.2s; }
+.btn:hover { filter:brightness(0.9); }
+.btn-danger { background:#e53935 }
+.equalizer { width:120px; height:40px; display:flex; align-items:flex-end; gap:4px; justify-content:center; margin:auto; }
+.bar { width:6px; background:#4caf50; border-radius:3px; }
+audio { max-width:220px }
+progress { width:100%; height:18px; margin:10px 0; cursor:pointer; direction:ltr !important }
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; justify-content:center; align-items:center; padding:16px; }
+.modal { background:#fff; width:min(720px,96vw); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); animation:pop .18s ease-out; }
+@keyframes pop { from { transform:scale(.98); opacity:.6 } to { transform:scale(1); opacity:1 } }
+.modal header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid #eee }
+.modal header h3 { margin:0; font-size:18px }
+.modal .close { background:transparent; border:none; font-size:22px; line-height:1; cursor:pointer; color:#e53935 }
+.modal .content { padding:16px 18px; line-height:1.9; text-align:justify; max-height:70vh; overflow:auto }
+.float-buttons { position:fixed; bottom:16px; right:16px; display:flex; flex-direction:column; gap:10px; z-index:2000; }
+.float-buttons button { width:150px; font-size:14px; border-radius:12px; padding:8px 10px; box-shadow:0 4px 10px rgba(0,0,0,0.2); }
+
+/* فریز کردن هدر جدول */
+.dataTables_scrollHeadInner, .dataTables_scrollHeadInner table { width:100% !important; }
+</style>
 </head>
 <body>
 
-<h2>مدیریت و پخش فایل‌های صوتی</h2>
+<h2>🎵 مدیریت و پخش فایل‌های صوتی</h2>
 
-<input type="file" id="audioReplaceInput" multiple accept="audio/*" style="display:none;" />
-<button class="btn" id="replaceBtn">📂 انتخاب فایل (جایگزینی)</button>
+<div class="row" style="margin-bottom:10px;">
+  <input type="file" id="audioReplaceInput" multiple accept="audio/*" style="display:none;">
+  <button class="btn" id="replaceBtn">📂 جایگزینی فایل</button>
+  <input type="file" id="audioAppendInput" multiple accept="audio/*" style="display:none;">
+  <button class="btn" id="appendBtn">➕ افزودن فایل</button>
 
-<input type="file" id="audioAppendInput" multiple accept="audio/*" style="display:none;" />
-<button class="btn" id="appendBtn">➕ افزودن فایل</button>
-
-<button class="btn" id="toggleRepeatBtn">🔁 تکرار: خاموش</button>
-
-<div class="controls-top">
-  <button class="btn" id="prevBtn">◀️ قبلی</button>
-  <button class="btn" id="nextBtn">▶️ بعدی</button>
+  <button class="btn" id="prevTrackBtn">◀️ آهنگ قبلی</button>
+  <button class="btn" id="nextTrackBtn">▶️ آهنگ بعدی</button>
+  <button class="btn" id="toggleRepeatBtn">🔁 تکرار: خاموش</button>
 </div>
 
-<progress id="globalProgress" value="0" max="1"></progress>
+<progress id="globalProgress" value="0" max="1" title="برای جابجایی در آهنگ کلیک کنید"></progress>
 
-<table id="audioTable">
+<table id="audioTable" class="display nowrap">
   <thead>
     <tr>
       <th>نام فایل</th>
-      <th>فرمت</th>
-      <th>حجم (MB)</th>
+      <th class="format">فرمت</th>
+      <th class="size">حجم (MB)</th>
       <th>مدت</th>
       <th>باقی‌مانده</th>
-      <th>کاور</th>
-      <th>پخش</th>
+      <th class="play">پخش</th>
       <th>کنترل</th>
       <th>اکوالایزر</th>
       <th>حذف</th>
@@ -67,178 +72,178 @@
   <tbody></tbody>
 </table>
 
+<!-- مودال‌ها -->
+<div class="modal-backdrop" id="helpModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <header>
+      <h3 id="helpTitle">📘 راهنمای استفاده</h3>
+      <button class="close" data-close="helpModal">&times;</button>
+    </header>
+    <div class="content">
+      <ul>
+        <li>📂 جایگزینی: پاک کردن لیست و اضافه کردن فایل‌های جدید</li>
+        <li>➕ افزودن فایل: اضافه کردن به انتهای جدول</li>
+        <li>⏪ / ⏩ : پرش ۱۰ ثانیه</li>
+        <li>نوار پیشرفت: کلیک برای جابجایی آهنگ</li>
+        <li>🗑️ حذف: حذف ردیف</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="aboutModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <header>
+      <h3 id="aboutTitle">👤 درباره نویسنده</h3>
+      <button class="close" data-close="aboutModal">&times;</button>
+    </header>
+    <div class="content">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <img src="https://via.placeholder.com/80" style="border-radius:50%">
+        <div>
+          <p>پلیر مرورگری برای مدیریت و پخش فایل‌های صوتی.</p>
+          <p><strong>توسعه‌دهنده:</strong> مصیب خانی</p>
+          <p><strong>ایمیل:</strong> <a href="mailto:mosayeb872@gmail.com">mosayeb872@gmail.com</a></p>
+          <p><strong>تماس:</strong> <span dir="ltr">+98 917 320 6052</span></p>
+          <p style="opacity:.8">نسخه: 1.0.0 — آخرین بروزرسانی: 2025-08-18</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="float-buttons">
+  <button class="btn btn-secondary" id="helpBtn">❓ راهنما</button>
+  <button class="btn btn-secondary" id="aboutBtn">👤 درباره نویسنده</button>
+</div>
+
 <script>
-let repeatEnabled = false;
-let currentAudio = null;
-let currentEq = null;
-const progressBar = document.getElementById('globalProgress');
+let currentAudio=null;
+let currentEq=null;
+let repeatEnabled=false;
 
-const table = $('#audioTable').DataTable({
-  language: {
-    search: "جست‌وجو:",
-    lengthMenu: "نمایش _MENU_ فایل",
-    info: "نمایش _START_ تا _END_ از _TOTAL_ فایل",
-    paginate: { first: "اول", last: "آخر", next: "بعدی", previous: "قبلی" }
+const table=$('#audioTable').DataTable({
+  scrollY:"50vh",scrollCollapse:true,paging:false,
+  language:{search:"جست‌وجو:",lengthMenu:"نمایش _MENU_ فایل",info:"نمایش _START_ تا _END_ از _TOTAL_ فایل",
+  paginate:{first:"اول",last:"آخر",next:"بعدی",previous:"قبلی"}}});
+
+// مودال‌ها
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpModal').style.display='flex';
+document.getElementById('aboutBtn').onclick=()=>document.getElementById('aboutModal').style.display='flex';
+document.querySelectorAll('.close').forEach(btn=>btn.addEventListener('click',()=>btn.closest('.modal-backdrop').style.display='none'));
+window.addEventListener('click',e=>{if(e.target.closest('.modal-backdrop') && e.target===e.target.closest('.modal-backdrop')) e.target.style.display='none'});
+window.addEventListener('keydown',e=>{if(e.key==='Escape') document.querySelectorAll('.modal-backdrop').forEach(m=>m.style.display='none')});
+
+// انتخاب فایل‌ها
+document.getElementById('replaceBtn').onclick=()=>document.getElementById('audioReplaceInput').click();
+document.getElementById('appendBtn').onclick=()=>document.getElementById('audioAppendInput').click();
+
+document.getElementById('audioReplaceInput').addEventListener('change',function(){
+  table.clear().draw(); currentAudio=null; document.getElementById('globalProgress').value=0;
+  Array.from(this.files).forEach(file=>addFileToTable(file)); this.value='';
+});
+document.getElementById('audioAppendInput').addEventListener('change',function(){
+  Array.from(this.files).forEach(file=>addFileToTable(file)); this.value='';
+});
+
+// دکمه‌های قبلی/بعدی و تکرار
+document.getElementById('prevTrackBtn').onclick=()=>playRelativeTrack(-1);
+document.getElementById('nextTrackBtn').onclick=()=>playRelativeTrack(1);
+document.getElementById('toggleRepeatBtn').onclick=()=>{
+  repeatEnabled=!repeatEnabled;
+  if(currentAudio) currentAudio.loop=repeatEnabled;
+  document.getElementById('toggleRepeatBtn').textContent=repeatEnabled?"🔁 تکرار: روشن":"🔁 تکرار: خاموش";
+};
+
+document.getElementById('globalProgress').addEventListener('click',function(e){
+  if(!currentAudio || !currentAudio.duration) return;
+  const rect=this.getBoundingClientRect();
+  currentAudio.currentTime=(e.clientX-rect.left)/rect.width*currentAudio.duration;
+});
+
+// اکوالایزر واقعی با Web Audio API
+function createEqualizer(audio){
+  const eq=document.createElement('div'); eq.className='equalizer';
+  const bars=[]; for(let i=0;i<5;i++){const b=document.createElement('div');b.className='bar';eq.appendChild(b);bars.push(b);}
+  const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const analyser=audioCtx.createAnalyser(); analyser.fftSize=64;
+  const source=audioCtx.createMediaElementSource(audio); source.connect(analyser); analyser.connect(audioCtx.destination);
+  const dataArray=new Uint8Array(analyser.frequencyBinCount);
+  function animate(){
+    analyser.getByteFrequencyData(dataArray);
+    for(let i=0;i<bars.length;i++){bars[i].style.height=`${10 + dataArray[i]/255*100}%`;}
+    requestAnimationFrame(animate);
   }
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById('toggleRepeatBtn').onclick = () => {
-    repeatEnabled = !repeatEnabled;
-    if (currentAudio) currentAudio.loop = repeatEnabled;
-    document.getElementById('toggleRepeatBtn').textContent = repeatEnabled ? "🔁 تکرار: روشن" : "🔁 تکرار: خاموش";
-  };
-
-  document.getElementById('replaceBtn').onclick = () => document.getElementById('audioReplaceInput').click();
-  document.getElementById('appendBtn').onclick = () => document.getElementById('audioAppendInput').click();
-
-  document.getElementById('audioReplaceInput').addEventListener('change', function () {
-    table.clear().draw();
-    currentAudio = null;
-    progressBar.value = 0;
-    Array.from(this.files).forEach(file => addFileToTable(file));
-    this.value = '';
-  });
-
-  document.getElementById('audioAppendInput').addEventListener('change', function () {
-    Array.from(this.files).forEach(file => addFileToTable(file));
-    this.value = '';
-  });
-
-  document.getElementById('prevBtn').onclick = () => {
-    if (!currentAudio) return;
-    const rows = Array.from(table.rows().nodes());
-    const index = rows.findIndex(row => row.querySelector('audio') === currentAudio);
-    if (index > 0) {
-      const prevAudio = rows[index - 1].querySelector('audio');
-      if (prevAudio) {
-        currentAudio.pause();
-        prevAudio.currentTime = 0;
-        prevAudio.play();
-      }
-    }
-  };
-
-  document.getElementById('nextBtn').onclick = () => {
-    if (!currentAudio) return;
-    const rows = Array.from(table.rows().nodes());
-    const index = rows.findIndex(row => row.querySelector('audio') === currentAudio);
-    if (index >= 0 && index < rows.length - 1) {
-      const nextAudio = rows[index + 1].querySelector('audio');
-      if (nextAudio) {
-        currentAudio.pause();
-        nextAudio.currentTime = 0;
-        nextAudio.play();
-      }
-    }
-  };
-});
-
-progressBar.addEventListener('click', function (e) {
-  if (!currentAudio || !currentAudio.duration) return;
-  const rect = this.getBoundingClientRect();
-  const percent = (e.clientX - rect.left) / rect.width;
-  currentAudio.currentTime = percent * currentAudio.duration;
-});
-
-function createEqualizer() {
-  const eq = document.createElement('div');
-  eq.className = 'equalizer';
-  for (let i = 0; i < 5; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    eq.appendChild(bar);
-  }
-  eq.style.visibility = 'hidden';
-  return eq;
+  animate(); return eq;
 }
 
-async function extractCover(file) {
-  try {
-    const metadata = await musicMetadata.parseBlob(file);
-    const pic = metadata.common.picture?.[0];
-    if (pic) {
-      const blob = new Blob([pic.data], { type: pic.format });
-      return URL.createObjectURL(blob);
-    }
-  } catch (e) {
-    console.warn("خطا در خواندن کاور:", e);
-  }
-  return null;
+// افزودن فایل به جدول
+function addFileToTable(file){
+  const url=URL.createObjectURL(file);
+  const audioPlayer=document.createElement('audio'); audioPlayer.src=url; audioPlayer.controls=true;
+  const remainingTime=document.createElement('span');
+  const equalizer=createEqualizer(audioPlayer); equalizer.style.visibility='hidden';
+
+  const controlContainer=document.createElement('div');
+  const btnBackward=document.createElement('button'); btnBackward.textContent='⏪ 10s'; btnBackward.className='btn';
+  btnBackward.onclick=()=>audioPlayer.currentTime=Math.max(0,audioPlayer.currentTime-10);
+  const btnForward=document.createElement('button'); btnForward.textContent='⏩ 10s'; btnForward.className='btn';
+  btnForward.onclick=()=>audioPlayer.currentTime=Math.min(audioPlayer.duration,audioPlayer.currentTime+10);
+  controlContainer.append(btnBackward,btnForward);
+
+  const deleteBtn=document.createElement('button'); deleteBtn.textContent='🗑️'; deleteBtn.className='btn btn-danger';
+
+  audioPlayer.addEventListener('play',()=>{
+    if(currentAudio && currentAudio!==audioPlayer) currentAudio.pause();
+    currentAudio=audioPlayer; currentEq=equalizer;
+    audioPlayer.loop=repeatEnabled;
+    equalizer.style.visibility="visible";
+  });
+  audioPlayer.addEventListener('pause',()=>equalizer.style.visibility="hidden");
+  audioPlayer.addEventListener('timeupdate',()=>{
+    if(!isFinite(audioPlayer.duration)) return;
+    remainingTime.textContent=(audioPlayer.duration-audioPlayer.currentTime).toFixed(1);
+    document.getElementById('globalProgress').value=audioPlayer.currentTime/audioPlayer.duration;
+  });
+  audioPlayer.addEventListener('ended',()=>{document.getElementById('globalProgress').value=0; equalizer.style.visibility="hidden";});
+
+  audioPlayer.addEventListener('loadedmetadata',()=>{
+    const durationText=isFinite(audioPlayer.duration)?audioPlayer.duration.toFixed(1):'—';
+    const row=table.row.add([
+      file.name,
+      '.'+(file.name.split('.').pop()||'').toLowerCase(),
+      (file.size/1024/1024).toFixed(2),
+      durationText,
+      '',
+      '',
+      '',
+      '',
+      ''
+    ]).draw(false).node();
+
+    row.cells[4].appendChild(remainingTime);
+    row.cells[5].appendChild(audioPlayer);
+    row.cells[6].appendChild(controlContainer);
+    row.cells[7].appendChild(equalizer);
+    row.cells[8].appendChild(deleteBtn);
+
+    deleteBtn.onclick=()=>{table.row(deleteBtn.closest('tr')).remove().draw(false);
+      try{URL.revokeObjectURL(url)}catch(e){}
+      if(currentAudio===audioPlayer){document.getElementById('globalProgress').value=0; currentAudio=null; currentEq=null;}
+    };
+  });
 }
 
-function addFileToTable(file) {
-  const url = URL.createObjectURL(file);
-  const audioPlayer = document.createElement('audio');
-  audioPlayer.src = url;
-  audioPlayer.controls = true;
-
-  const remainingTime = document.createElement('span');
-  const equalizer = createEqualizer();
-  const deleteBtn = document.createElement('span');
-  deleteBtn.textContent = '🗑️';
-  deleteBtn.className = 'btn-delete';
-
-  const btnBackward = document.createElement('button');
-  btnBackward.className = 'btn';
-  btnBackward.textContent = '⏪ 10s';
-  btnBackward.onclick = () => audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
-
-  const btnForward = document.createElement('button');
-  btnForward.className = 'btn';
-  btnForward.textContent = '⏩ 10s';
-  btnForward.onclick = () => audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
-
-  const controlContainer = document.createElement('div');
-  controlContainer.append(btnBackward, btnForward);
-
-  audioPlayer.addEventListener('play', () => {
-    if (currentAudio && currentAudio !== audioPlayer) currentAudio.pause();
-    currentAudio = audioPlayer;
-    currentEq = equalizer;
-    audioPlayer.loop = repeatEnabled;
-    equalizer.style.visibility = "visible";
-  });
-
-  audioPlayer.addEventListener('pause', () => equalizer.style.visibility = "hidden");
-  audioPlayer.addEventListener('timeupdate', () => {
-    const remain = audioPlayer.duration - audioPlayer.currentTime;
-    remainingTime.textContent = remain.toFixed(1);
-    progressBar.value = audioPlayer.currentTime / audioPlayer.duration;
-  });
-
-  audioPlayer.addEventListener('ended', () => {
-    progressBar.value = 0;
-    equalizer.style.visibility = "hidden";
-  });
-
-  audioPlayer.addEventListener('loadedmetadata', () => {
-    extractCover(file).then(coverUrl => {
-      const row = table.row.add([
-        file.name,
-        '.' + file.name.split('.').pop(),
-        (file.size / 1024 / 1024).toFixed(2),
-        audioPlayer.duration.toFixed(1),
-        '',
-        `<img src="${coverUrl || 'https://via.placeholder.com/60?text=🎵'}" class="cover-img" />`,
-        '',
-        '',
-        '',
-        ''
-      ]).draw(false).node();
-
-      row.cells[4].appendChild(remainingTime);
-      row.cells[6].appendChild(audioPlayer);
-      row.cells[7].appendChild(controlContainer);
-      row.cells[8].appendChild(equalizer);
-      row.cells[9].appendChild(deleteBtn);
-
-      deleteBtn.onclick = () => {
-        table.row(deleteBtn.closest('tr')).remove().draw(false);
-        URL.revokeObjectURL(url);
-      };
-    });
-  });
+// حرکت بین آهنگ‌ها
+function playRelativeTrack(offset){
+  if(!currentAudio) return;
+  const rows=Array.from(table.rows().nodes());
+  const index=rows.findIndex(r=>r.querySelector('audio')===currentAudio);
+  if(index<0) return;
+  const targetIndex=index+offset;
+  if(targetIndex<0 || targetIndex>=rows.length) return;
+  const nextAudio=rows[targetIndex].querySelector('audio');
+  if(nextAudio){currentAudio.pause(); nextAudio.currentTime=0; nextAudio.play();}
 }
 </script>
 
